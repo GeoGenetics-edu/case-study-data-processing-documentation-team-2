@@ -30,7 +30,7 @@ done
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/-7_RZisP)
 
 
-#Team 2, day 2, Tuesday
+# Team 2, day 2, Tuesday
 
 Main goal: Change script to deal with 5 samples instead of 1
 
@@ -81,3 +81,5 @@ metaDMG dashboard config.yaml
 ```
 
 Play with the visualisation and try to see how to filter and visualise the data in a meaningful way. 
+
+We find that terrestrial taxa generally have higher damage rates than that of aquatic taxa. Regarding Bacteria, aerobic families (e.g., Mycobacteriaceae) usually have nice damage patterns, and damage rate increases as an increase of age. However, mixed families (i.e., aerobic and anaerobic taxa), for example, Pseudomonadaceae, do not have nice damage patterns. This means that these taxa may have different taphonomic processes.
