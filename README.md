@@ -1,3 +1,7 @@
+# Day 1
+
+## Alignment with Bowtie2
+
 First we made a symbolic link to data:
 ```
 ln -s ~/course/data/day2/fastq/*.fq.gz .
@@ -26,22 +30,20 @@ bowtie2 --threads 5 -k 100 -x ~/course/data/shared/mapping/db/aegenomics.db -U $
 done
 ```
 
+# Day 2
 
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/-7_RZisP)
+# metaDMG
 
+Main goal: Apply metaDMG on 5 samples efficiently.
 
-# Team 2, day 2, Tuesday
-
-Main goal: Change script to deal with 5 samples instead of 1
-
-First activate environment and go to working directory
+First activate the environment and go to the working directory:
 
 ```
 conda activate day1
 cd ~/course/wdir/mapping
 ```
 
-Then sort the five sample alignments
+Then sort the five sample alignments:
 
 ```
 for i in *[0-9].bam
@@ -52,13 +54,13 @@ samtools sort -n ${i} -@ 5 > ${j}.sort.bam
 done
 ```
 
-Then activate the metaDMG environment
+Then activate the metaDMG environment:
 
 ```
 conda activate metaDMG
 ```
 
-Note: No need to run the metaDMG command with ncl
+*Note: No need to run metaDMG with the ncl command. It was just to show that one could run ngsLCA directly from metaDMG.*
 
 Run metaDMG config to create the config file to use it on all the samples. 
 
@@ -66,15 +68,15 @@ Run metaDMG config to create the config file to use it on all the samples.
 metaDMG config *.sort.bam --names ~/course/data/shared/mapping/taxonomy/names.dmp --nodes ~/course/data/shared/mapping/taxonomy/nodes.dmp --acc2tax ~/course/data/shared/mapping/taxonomy/acc2taxid.map.gz -m /usr/local/bin/metaDMG-cpp
 ```
 
-Edit the config file with vim and set the custom database option to true, the number of samples to 2 and the number of cores per sample to 2 as well. (We cannot use more than 8 cores per student at once).
+Edit the config file with `vim` and set the custom database option to `true`, the number of samples to `2` and the number of cores per sample to `2` as well. (We cannot use more than 8 cores per student at once).
 
-Now finally run metaDMG
+Now finally run metaDMG:
 
 ```
 metaDMG compute config.yaml
 ```
 
-Then use metaDMG dashboard to open the visualisation.
+Then use metaDMG dashboard to open the visualisation:
 
 ```
 metaDMG dashboard config.yaml
