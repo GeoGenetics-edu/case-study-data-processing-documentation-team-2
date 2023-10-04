@@ -90,7 +90,204 @@ We find that terrestrial taxa generally have higher damage rates than that of aq
 
 ## Data processing and visualisation of the metaDMG results
 
-# Weihan can you add your part here please :-)
+1. Convert the output of metaDMG to a merged csv file.
+
+```
+cd ~/course/wdir/mapping
+metaDMG convert --output metaDMGresults.csv --add-fit-predictions
+```
+
+2. Create a new working directory
+
+```
+mkdir ~/course/wdir/mapping/plots
+```
+
+3. Activate r environment and R.
+
+```
+conda activate r
+R
+```
+We actually ran all R scripts in R Studio.
+
+4. Activate libraries.
+
+```
+library(tidyverse) 
+library(reshape2)
+library(vegan)
+library(rioja)
+library(ggplot2)
+library(dplyr)
+library(gghighlight)
+```
+
+5. Set working directory.
+
+```
+setwd("~/course/wdir/mapping/plots/")
+```
+
+6. Import data and metadata
+
+```
+df <- read_csv("~/course/wdir/mapping/metaDMGresults.csv")
+metaDATA <- read.delim("~/course/data/shared/metadata/metadata.tsv")
+```
+
+Then we checked the count number of columns in the dataframe 'df', which is 187.
+
+7. Replace header "sample_name" with "sample"
+
+```
+colnames(metaDATA)[colnames(metaDATA) == "sample_name"] <- "sample"
+colnames(metaDATA)[colnames(metaDATA) == "years_bp"] <- "YearsBP"
+```
+
+8. Merge the metadata and dataframe by "sample"
+
+```
+dt <- merge(df, metaDATA, by = "sample")
+```
+
+9. Then we checked if new columns have been added to the dt dataframe,
+
+```
+ncol(df) < ncol(dt)
+```
+
+and the result is [1] TRUE.
+
+10. Set the parameters that to filter the data
+
+```
+DamMin2 = 0.00
+MapSig2 = 0
+MinRead2 = 100
+MinLength = 35
+```
+
+The reason we used DamMin2=0 and MapSig2=0 is that we would like to keep all potential damage information at very beginning. We don't consider the results with read count less than 100. Also the fragment length should longer than 35 bp.
+
+11. Subset the table by Viridiplantae
+
+```
+dt2 <- dt %>% filter(MAP_damage > DamMin2, N_reads >= MinRead2, mean_L > MinLength, MAP_significance  > MapSig2,  grepl("Viridiplantae",tax_path), grepl("\\bgenus\\b", tax_rank), grepl("", sample))
+```
+
+12. Plot the results of Viridiplantae
+
+```
+pdf(file = "aeCourse.DNAdamageModelJitterPlot.pdf", width = 8, height = 4)
+ggplot() +
+  geom_jitter(data = dt2, aes(x=as.numeric(YearsBP), y=MAP_damage, size = N_reads), alpha =0.5) +
+  gghighlight(N_reads > 500) +
+  xlab("Years BP") +
+  ylab("DNA damage") +
+  labs(color = "Values for taxa with \n>500 reads", size = "Number of reads")
+dev.off()
+```
+
+![Figure1](https://github.com/GeoGenetics-edu/case-study-data-processing-documentation-team-2/assets/146089734/109711e8-e808-4ad4-b9a9-301aae1f4550)
+
+We can see damage rate generally increases with age, which makes sense.
+
+13. Plot plant taxa, highlight taxa with more than 500 reads and add the min, max and median.
+
+```
+pdf(file = "aeCourse.DNAdamageLRJitterPlot.pdf", width = 8, height = 4)
+ggplot() +
+  geom_jitter(data = dt2, aes(x=as.numeric(YearsBP), y=MAP_damage, size = MAP_significance), alpha =0.5) +
+  gghighlight(N_reads > 500) +
+  xlab("Years BP")+
+  ylab("DNA damage") +
+  labs(color = "Values for taxa with \n>500 reads", size = "Significance \nfor Taxa with >500 reads")
+dev.off()
+```
+
+![Figure2](https://github.com/GeoGenetics-edu/case-study-data-processing-documentation-team-2/assets/146089734/bc9b4ff8-60be-4831-8061-2e284bdb2d4d)
+
+Significance shows the same pattern. In addition, the damage in the older samples seems to be more convincing (significant) than that in the younger samples. 
+
+14. Create filtered table for DNA damage model
+
+```
+filtered_data <- dt2 %>% filter(N_reads >= 500)
+```
+
+15. Set the parameters that to further filter the data
+
+```
+MapSig3 = 3
+MinRead3 = 100
+MinLength3 = 35
+```
+
+This time we increase the significance to 3.
+
+16. Further subset the table
+
+```
+filtered_data_viridiplantae <- filtered_data %>% filter(N_reads >= MinReads3, mean_L > MinLength3, MAP_significance > MapSig3,  grepl("Viridiplantae",tax_path), grepl("\\bgenus\\b", tax_rank), grepl("", YearsBP))
+```
+Then we counted the number of unique plant taxa, which is 78.
+
+17. Prepare a table for downstream plot and data wrangling of the plants.
+
+```
+data_wide_plants <- dcast(filtered_data_viridiplantae, tax_name ~ YearsBP, value.var="N_reads", fun.aggregate = sum)
+n <- ncol(data_wide_plants)
+b2 <- data_wide_plants[,2:n]
+rownames(b2) <- data_wide_plants$tax_name
+b2[is.na(b2)] <- 0 #set all NAs as zeros
+```
+
+18. Calculate the precentage (relative abundance) of each taxon in each sample.
+
+```
+i=ncol(b2)
+b3=as.matrix(b2[,seq(1,i)])  
+b4 <- prop.table(data.matrix(b3), margin=2)*100
+colSums(prop.table(b4, margin=2)*100)
+```
+
+19. Plot the strat.plot
+
+```
+b5 <- t(b4)
+z <- as.numeric(rownames(b5)) # depth/depth
+pdf(file = "aeCourse.Stratplot_Plants_area.pdf", width = 15, height = 5)
+pdf(file = "aeCourse.Stratplot_Plants_area1.pdf", width = 40, height = 10)
+strat.plot(b5, y.rev=TRUE, plot.line=TRUE, plot.poly=TRUE,
+           plot.bar=FALSE, lwd.bar=10, sep.bar=F, scale.percent=T,
+           xSpace=0.0001, x.pc.lab=TRUE, x.pc.omit0=TRUE, srt.xlabel=90,
+           las=2, exag=TRUE, exag.mult=5, ylabel = "years BP",  yvar = z)
+dev.off()
+```
+
+![Figure3](https://github.com/GeoGenetics-edu/case-study-data-processing-documentation-team-2/assets/146089734/b5d6c43d-e678-48be-90ba-7f94c1ef8d17)
+Hum... Not very nice. Let's plot the heatmap.
+
+20. Plot the heatmap
+
+```
+y <- ncol(b5)
+b6 <- melt(b5[,1:y])
+sapply(b6, class)
+colnames(b6) <- c("YearsBP","Taxa", "percentage")
+p1 <- ggplot(b6, aes(y=Taxa, x=YearsBP, fill=percentage)) + 
+  geom_tile(colour="lightgrey") +
+  theme_minimal() + scale_fill_gradient(low="white", high="darkgreen")+
+scale_y_discrete(limits=rev)
+p1 + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust =1)) + 
+  ggtitle("Percentage of taxa plotted as heatmap") +
+  xlab("YearsBP") + ylab("Taxa name") + labs(fill = "percentage %")
+```
+
+![Percentage of taxa plotted as heatmap](https://github.com/GeoGenetics-edu/case-study-data-processing-documentation-team-2/assets/146089734/bf9ba92f-d3f1-4694-a1cc-3edb43bffda0)
+
+Much better! We can see that plant community in this cave changed fast in the past 6000 years. The two younger samples have higher richness than the older samples. In addition, plant composition seems strange, including many tree and shrub taxa (e.g. Alnus, Betula, Populus, Salix), even aquatic plant taxa (e.g. Hippuris). Therefore, the sampling site was probably close to the cave entrance?
 
 ## Euka
 
