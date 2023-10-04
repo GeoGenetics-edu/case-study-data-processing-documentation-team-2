@@ -88,6 +88,10 @@ We find that terrestrial taxa generally have higher damage rates than that of aq
 
 # Day 3
 
+## Data processing and visualisation of the metaDMG results
+
+# Weihan can you add your part here please :-)
+
 ## Euka
 
 First copy the folder to your own folder
